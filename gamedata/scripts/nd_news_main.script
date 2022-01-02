@@ -1,0 +1,543 @@
+--[[----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+File: nd_news_main.script.
+Author: OGSE Team.
+Version: 1.0.
+Description: Новости.
+Info: Использовались некоторые наработки AMK (тексты, некоторые функции). Отдельное спасибо DEXXX-у.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------]]--
+
+local post_message_prob = 1 -- простые сообщения,сообщения о выбросе.
+local post_message_prob2 = 1 --продажа айтема
+local post_message_dolg = 1 --Сообщения от долговцев
+local post_message_freedom = 1 --Сообщения от свободовцев
+local post_message_random = 1
+local post_message_vubros = 0.2 
+
+-- Вспомогательные функции для новостей
+local m_post_message = ""
+--[[
+local messages_none ={
+"What the hell?",
+-- "Количество выбросов неумолимо растёт!",
+"Might've committed suicide...",
+"Haven't seen this kind of shit in a while.",
+"You won't believe what kind of mutant I just ran into!",
+"Heard the news? Someone's trying to break through to the Scorcher again...",
+"Whoever needs a good rifle, message me!",
+"My detector's not working. It won't find any anomalies or radioactive zones at all. It peeps, but nope, it doesn't reveal anything. I need to see the Barkeep for this. I'll ask him what's up with it.",
+"Damn it. The crows are scattering. Probably a new anomaly of some kind. Watch out.",
+"I saw an Izlom in the Silent Hills. Horrible thing! Be careful.",
+"Damn. Used up two magazines on a zombie. Those tough monsters!",
+"We're getting closer to the hideout now. Gonna rest up a bit. Well... Who do we have here? Aaaah, crap..."
+}
+--]]
+
+local dolg_news={
+"\\n%c[255,245,118,54]Duty\\n%c[255,245,118,54]Stalker! Join the Duty ranks! We'll protect the world from the Zone's evil!",
+}
+
+local freedom_news={
+"\\n%c[255,245,118,54]Freedom\\n%c[255,245,118,54]Long live Freedom! We'll make the world a better place with the help of the Zone!",
+}
+
+noname_teamletes = {
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[default]Come in! Brothers, don't go near the outpost... Some jackasses attacked a patrol! Things are hot right now! They're probably going on a raid as payback.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Not too long ago at the outpost, they took out one of Barkeep's couriers and grabbed his loot. Full of stuff - the commander's holding a stash of artifacts. If anyone's feeling suicidal, try and retrieve it..",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Attention, everyone! North of the bridge at the outpost, around 100 meters away behind the abandoned BTR, I ran into a cluster of Electro anomalies. I'll share info about it for a beer.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]We're seeing a wave of mutants coming from the northern gorge.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]We're seeing a wave of mutants coming from the east, presumably from the Dark Valley.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Come in! Bandits are at the factory again. They're confiscating stuff from stalkers. We need someone with experience to scare them off. It'd be a great service.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Saw a group of shady guys. Looked like Freedom. They're heading toward the Bar.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]A group of five are moving toward the Silent Hills; in all likelihood, it's the military. Take measures!",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]To the east of the bridge at the outpost I saw a pack of dogs. Anywhere from 20 to 30 of them. Can you imagine that? God.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]I’m pinned down by raiders! Help",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]I overheard some military talks. Seems like they're planning an op on Yantar.",
+	"\\n%c[255,245,118,54]Digger\\n%c[default]Toad, Duty's over at the farm again. Why?",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Don't go into any basements! They're full of mutants! Go around the top!",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]People! Be careful in the village by the army warehouses! A Burnt Fuzz has grown on the pillars!",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]I heard some army patrolmen say that the military's gathering everything they can find and putting it on the third floor of the Institute building. If anyone feels like risking their life for the loot, try to break through.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Strelok has returned! I heard this from people who know about it. He's back from the center itself! That means we can... Man, that means we're gonna break through to the Zone's center, and then we'll see who laughs last.",
+	"\\n%c[255,245,118,54]Unknown bandit\\n%c[255,245,118,54]To whoever's in the Garbage - we're coming over for an inspection. Hehe.",
+	"\\n%c[255,245,118,54]Unknown bandit\\n%c[255,245,118,54]Freaking zombies are going wild in the Garbage again...",
+	"\\n%c[255,245,118,54]Encrypted\\n%c[255,245,118,54]Gathering people for a raid on the catacombs.",
+	"\\n%c[255,245,118,54]Encrypted\\n%c[255,245,118,54]I'm in need of two stalkers for a raid in the catacombs.",
+	"\\n%c[255,245,118,54]Encrypted\\n%c[255,245,118,54]I need stalkers with experience in raids deep into the Zone. Payment is appropriate. If anyone's interested, message me and we'll discuss where to meet.",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Hunter, respond. We need to talk. How many times do I have to ping you? Where did you go?",
+	"\\n%c[255,245,118,54]Unknown stalker\\n%c[255,245,118,54]Hunter, respond. We need to talk.",
+    "\\n%c[255,245,118,54]Professor\\n%c[255,245,118,54]A personal request from me. If any persons are near my shelter and have sufficient ammunition, kill the bloodsuckers at Yantar! They live to terrorize me!",
+    "\\n%c[255,245,118,54]Anonymous \\n%c[255,245,118,54]They say the Professor has new detectors!",
+
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!",
+    "\\n%c[255,245,118,54]System message: 408 \\n%c[255,245,118,54]News service is being updated...",
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!",
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!",
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!",
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!",
+    "\\n%c[255,245,118,54]Barkeep \\n%c[255,245,118,54]If you're looking for a place to rest, eat, drink, talk or find some work, then the Stalker bar is the place for you. We're always happy to serve new customers!"
+
+}
+
+
+local fnames = {
+"Unknown",
+}
+
+local snames = {
+"Stalker",
+}
+
+local trade_templates = {
+"Selling ",
+"Buying "
+}
+
+local what_trade = {
+"an RPK-74M machine gun with ammo. I'll be ",
+"a PKM machine gun with ammo. I'll be ",
+"an AK with ammo. I'll be ",
+"a Fort with ammo. I'll be ",
+"a Gauss rifle with ammo. I'll be ",
+"an AKM with ammo. I'll be ",
+"a GSh-18 with ammo. I'll be ",
+"a Vintorez with ammo. I'll be ",
+"a PM with ammo. I'll be ",
+"a PB with ammo. I'll be ",
+"an MP5 with ammo. I'll be ",
+"a BM-16 with ammo. I'll be ",
+"an SVD with ammo. I'll be ",
+"a TOZ-34 with ammo. I'll be ",
+"an FN-2000 with ammo. I'll be ",
+"an SVU with ammo. I'll be ",
+"an RG-6 with ammo. I'll be ",
+"an AKS-74U with ammo. I'll be ",
+"a Desert Eagle with ammo. I'll be ",
+}
+
+local where_trade = {
+"in the Cordon,",
+"in the Bar,",
+"in the village in the Hills,",
+"in the Hills,",
+"in the Cordon,",
+"in the Cordon, next to the Gravi anomalies,",
+"in the Cordon, near the bridge,",
+"in the Cordon, near the rusted train car,",
+"around the Cordon,",
+"near the Cordon,",
+"in front of the Cordon,",
+"not far from the Cordon,",
+"next to the Cordon,",
+"by the Cordon,",
+"in the Garbage,",
+"in the Garbage, around the hangar,",
+"around the Garbage,",
+"near the Garbage,",
+"in front of the Garbage,",
+"not far from the Garbage,",
+"next to the Garbage,",
+"by the Garbage,",
+"at MedPribor,",
+"at MedPribor, by the research institute,",
+"around MedPribor,",
+"near MedPribor,",
+"in front of MedPribor,",
+"not far from MedPribor,",
+"next to MedPribor,",
+"by MedPribor,",
+"at Yantar,",
+"at Yantar, in the swamp,",
+"at Yantar, at the factory,",
+"around Yantar,",
+"near Yantar,",
+"in front of Yantar,",
+"not far from Yantar,",
+"next to Yantar,",
+"by Yantar,",
+"in the Dark Valley,",
+"around the Dark Valley,",
+"near the Dark Valley,",
+"in front of the Dark Valley,",
+"not far from the Dark Valley,",
+"next to the Dark Valley,",
+"by the Dark Valley,",
+"in the Hills,",
+"around the Hills,",
+"near the Hills,",
+"in front of the Hills,",
+"not far from the Hills,",
+"next to the Hills,",
+"by the Hills,",
+"around the abandoned village,",
+"near the abandoned village,",
+"in front of the abandoned village,",
+"not far from the abandoned village,",
+"next to the abandoned village,",
+"by the abandoned village,",
+"around the old water tower, which is in the abandoned village,,",
+"in front of the old water tower in the village,",
+"not far from the old water tower in the abandoned village,",
+"next to the old water tower,",
+"by the old water tower in the village,",
+"near the Bar,",
+"in front of the Bar,",
+"not far from the Bar,",
+"around the Barrier,",
+"near the Barrier,",
+"in front of the Barrier,",
+"not far from the Barrier,",
+"next to the Barrier,",
+"by the Barrier,",
+"at the Rostok factory,",
+"around the Rostok factory,",
+"near the Rostok factory,",
+"in front of the Rostok factory,",
+"not far from the Rostok factory,",
+"next to the Rostok factory,",
+"by the Rostok factory,",
+"around the Duty base,",
+"near the Duty outpost,",
+"in front of the Duty outpost,",
+"not far from the Duty outpost,",
+"next to the Duty outpost,",
+"by the Duty outpost,",
+"around the entrance to the Freedom base,",
+"near the Freedom base,",
+"in front of the Freedom base,",
+"not far from the Freedom base,",
+"next to the entrance to the Freedom base,",
+"by the Freedom base,",
+"in the Cordon,",
+"around the Cordon,",
+"near the Garbage,",
+"in front of the Garbage,",
+"not far from the Garbage,",
+"next to the Garbage,",
+"by the Cordon,",
+"at the factory,",
+"around the factory,",
+"near the factory,",
+"in front of the factory,",
+"not far from the factory,",
+"next to the factory,",
+"by the factory,",
+"around the scientist camp,",
+"by the scientist camp,",
+"not far from the scientist camp,",
+"next to the scientist camp,",
+"around the entrance to the Yantar factory,",
+"near the gate to the Yantar factory,"
+}
+
+local news_when={
+"Today, ",
+"An hour ago, ",
+"Not long ago, ",
+"A couple of minutes ago, ",
+"Just now, ",
+"Half an hour ago, "
+}
+
+local news_text={
+"a pack of dogs appeared. ",
+"a pack of blind dogs appeared. ",
+"a pack of mad dogs appeared. ",
+"a pack of pseudodogs appeared. ",
+"a pack of mad pseudodogs appeared.",
+"a huge horde of dogs appeared. ",
+"a huge horde of blind dogs appeared. ",
+"a huge horde of mad dogs appeared. ",
+"a damn controller appeared. Keep your eyes out! ",
+"a controller appeared. ",
+"I saw a lot of flesh. ",
+"I saw flesh. ",
+"a pack of boars appeared. ",
+"a pack of mad boars appeared. ",
+"I saw a couple of bloodsuckers. ",
+"I saw a bloodsucker. ",
+"an army helicopter flew by. They've probably started a new raid!",
+"an army helicopter flew by. They fired at someone with a machine gun and left. Be on the lookout. ",
+"I saw an army helicopter heading to the north. ",
+"I overheard some military talks. They're going on a major raid in a number of areas. Be on the lookout. ",
+"I overheard some military talks. They're plotting another raid on the MedPribor. Their plans will fail as always, but still, stay out of that place! ",
+"the jarheads have begun a sweep. ",
+"the damn military have started clearing the area. Don't go there. ",
+"I saw some rats. ",
+"I saw a pack of rats. Don't go there. ",
+"I saw a huge rat. ",
+"I almost got strangled by a zombie. Barely made it out alive. ",
+"I ran into a zombie. Barely got out. ",
+"I saw a couple of zombies. ",
+"I think I saw a zombie. There might be a controller nearby. ",
+"I think I saw some kind of ghostly creature. Didn't look like a bloodsucker. The Zone never runs out of surprises... ",
+"there was a shootout with the bandits. ",
+"a sniper fired at me. Careful there. ",
+"I fought off a wave of mutants. Barely made it out alive. They killed two of our guys. ",
+"mutants came down on us. Slaughtered everyone. ",
+"I saw a torn-up body. Try not to get too close. Might be an anomaly nearby. ",
+"I saw a dry, sucked-out corpse. Might be a bloodsucker lair nearby. ",
+"I heard a terrible scream. Damn, better not go in its direction... ",
+"I saw a bloodstained stalker drag something on the ground. A bloodsucker?! ",
+"I saw a pack of dogs dragging a stalker into a bush. Be careful. ",
+"there was a shootout with the bandits. They killed everyone. ",
+"we ran into an army patrol. Had to pop them. I don't recommend hanging around there. They're probably going on a raid. ",
+"we stumbled on an army patrol. They weren't too competent. We took them out. I recommend against showing up there. They're most likely on a raid. ",
+"I saw an Izlom tear apart a stalker right before my eyes. The mutants are going freaking wild here... If I don't get the hell out of here, I'm dead meat! ",
+"a load of new anomalies showed up. Watch out! ",
+"a pack of dogs appeared.",
+"a pack of blind dogs appeared.",
+"a pack of mad dogs appeared.",
+"a pack of pseudodogs appeared.",
+"a pack of mad pseudodogs appeared.",
+"a huge horde of dogs appeared.",
+"a huge horde of blind dogs appeared.",
+"a huge horde of mad dogs appeared.",
+"a damn controller appeared. Keep your eyes out!",
+"a controller appeared.",
+"I saw a lot of flesh.",
+"I saw flesh.",
+"a pack of boars appeared.",
+"a pack of mad boars appeared.",
+"I saw a couple of bloodsuckers.",
+"I saw a bloodsucker.",
+"an army helicopter flew by. They've probably started a new raid...",
+"an army helicopter flew by. They fired at someone with a machine gun and got out. Be on the lookout.",
+"I saw an army helicopter heading to the north.",
+"I overheard some military talks. They're going on a major raid in a number of areas. Be on the lookout.",
+"I overheard some military talks. They're plotting another raid on the MedPribor. Their plans will fail as always, but still, stay out of that place!",
+"the jarheads have begun a sweep.",
+"the damn jarheads have started clearing the area. Don't go there!",
+"I saw a zombie.",
+"I saw a pack of zombies. Don't go there.",
+"I saw a huge rat.",
+"I almost got strangled by a zombie. Barely made it out alive.",
+"I ran into a zombie. Barely got out.",
+"I saw a couple of zombies.",
+"I think I saw a zombie. There might be a controller nearby.",
+"I think I saw some kind of ghostly creature. Didn't look like a bloodsucker. The Zone never runs out of surprises...",
+"there was a shootout with the bandits.",
+"a sniper fired at me. Careful there.",
+"I fought off a wave of mutants. Barely made it out alive. They killed two of our guys.",
+"mutants came down on us. Slaughtered everyone.",
+"I saw a torn-up body. Try not to get too close. Might be an anomaly nearby.",
+"I saw a dry, sucked-out corpse. Might be a bloodsucker lair nearby.",
+"I heard a terrible scream. Damn, better not go in its direction...",
+"I saw a bloodstained stalker drag something on the ground. A bloodsucker?!",
+"I saw a pack of dogs dragging a stalker into a bush. Be careful.",
+"there was a shootout with the bandits. They killed everyone.",
+"we ran into an army patrol. Had to pop them. I don't recommend hanging around there. They're probably going on a raid.",
+"we stumbled on an army patrol. They weren't too competent. We took them out. I recommend against showing up there. They're most likely on a raid.",
+"I saw a zombie tear apart a stalker right before my eyes. The mutants are going freaking wild here... And right now it's chasing me. I need to get rid of this thing...",
+"a load of new anomalies have showed up. Watch out!"
+}
+
+--[[
+function game_minutes()
+	local gtime = level.get_time_days()*60*24+level.get_time_hours()*60+level.get_time_minutes()  --время в игровых минутах	
+return gtime
+end
+
+monsters = { "псевдогигант", "зомби", "кровосос", "полтергейст", "бюрер", "химера", "зомби", "контроллёр", "псевдособака", "собака", "плоть", "карлик", "кабан", "крыса"}
+--]]
+
+function show_news_trade(time)
+	if math.random() < post_message_prob2 then
+		m_post_message = trade_templates[math.random(table.getn(trade_templates))]
+	end
+	if (m_post_message ~= "") then
+		local fname = fnames[math.random(table.getn(fnames))]
+		local sname = snames[math.random(table.getn(snames))]
+		local from = fname.." "..sname
+		local what_trade = what_trade[math.random(table.getn(what_trade))]
+            local where_trade = where_trade[math.random(table.getn(where_trade))]
+            m_post_message = "%c[255,245,118,54]".. from ..":\\n%c[255,245,118,54]".. m_post_message .. what_trade .. where_trade .. "."
+		db.actor:give_game_news(m_post_message, "ui\\ui_icons_task", Frect():set(450,50,50,50), 0, 2000*time)
+		m_post_message = ""
+	end
+end
+
+-- Просто
+function show_news_another(time)
+	if math.random() < post_message_prob then
+		m_post_message = noname_teamletes[math.random(table.getn(noname_teamletes))]
+	end
+          
+	if (m_post_message ~= "") then
+		
+		--local news_text = m_post_message
+		db.actor:give_game_news(m_post_message, "ui\\ui_icons_task", Frect():set(400,150,50,50), 0, 2000*time)
+		m_post_message = ""
+	end
+end                
+
+-- Долг
+function show_news_dolg(time)
+	if math.random() < post_message_dolg then
+		m_post_message = dolg_news[math.random(table.getn(dolg_news))]
+	end
+
+	if (m_post_message ~= "") then
+		--local news_text = m_post_dolg
+		db.actor:give_game_news(m_post_message, "ui\\ui_icons_task", Frect():set(150,0,50,50), 0, 2000*time)
+		m_post_message = ""
+	end
+end
+
+
+-- Свобода
+function show_news_freedom(time)
+	if math.random() < post_message_freedom then
+		m_post_message = freedom_news[math.random(table.getn(freedom_news))]
+	end
+	if (m_post_message ~= "") then
+		local news_text = m_post_freedom
+		db.actor:give_game_news(m_post_message, "ui\\ui_icons_task", Frect():set(0,150,50,50), 0, 2000*time)
+		m_post_message = ""
+	end
+end
+
+-- Полностью рандомные
+function show_news_random(time)
+	if math.random() < post_message_random then
+		m_post_message = news_when[math.random(table.getn(news_when))]
+	end
+
+	if (m_post_message ~= "") then
+		local fname = fnames[math.random(table.getn(fnames))]
+		local sname = snames[math.random(table.getn(snames))]
+		local from = fname.." "..sname
+		local where = where_trade[math.random(table.getn(where_trade))]
+            local text = news_text[math.random(table.getn(news_text))]
+            m_post_message = "%c[255,245,118,54]".. from ..":\\n%c[255,245,118,54]".. m_post_message .. where .. " " .. text
+		db.actor:give_game_news(m_post_message, "ui\\ui_icons_task", Frect():set(400,150,50,50), 0, 2000*time)
+		m_post_message = ""
+	end
+end
+
+
+
+
+
+--Фейк сообщения о выбросе - просто нервируем игрока
+function vubros_msg(time)
+	local blu_when = {
+	"in two minutes.",
+	"in just a moment.",
+	"in a couple of minutes.",
+		}
+	local blu_message = {
+	"Find some cover! A blowout is coming ",
+	"The professor says his equipment estimates the appearance of an emission ",
+	"When I was visiting the Professor, he mentioned an emission. It'll be here ",
+	"There's gonna be a blowout ",
+	"Attention! The eggheads are saying that there'll be a blowout ",
+		}
+	if math.random() < post_message_vubros then
+		m_post_message = blu_message[math.random(table.getn(blu_message))]
+	end
+          
+	if (m_post_message ~= "") then
+		local fname = fnames[math.random(table.getn(fnames))]
+		--local sname = snames[math.random(table.getn(snames))]
+		--local from = fname.." "..sname
+		local bluw_msg_when = blu_when[math.random(table.getn(blu_when))]
+            local news_text = "%c[255,255,0,0]".. fname ..":\\n%c[255,245,118,54]"..m_post_message .. bluw_msg_when 
+	     db.actor:give_game_news(news_text, "ui\\ui_icons_task", Frect():set(350,150,50,50), 0, 2000*time)
+		m_post_message = ""
+      end
+end
+		
+--[[
+function isIsolatedLevel(level_name)
+	local ln = level_name
+	if (ln == "l03u_agr_underground" or ln ==  "l02_garbage" or ln == "l04u_labx18" or ln == "l08u_brainlab" or ln == "l10u_bunker") then
+	end
+end
+
+function filter()
+local level_name = level.name()
+
+if level_name ==  "lvl1_escape" then
+nd_news_main_data.on_connect()
+end
+
+if level_name ==  "lvl2_garbage" then
+nd_news_main_data.on_connect()
+end
+
+if level_name ==  "lvl3_agroprom" then
+nd_news_main_data.on_connect()
+end
+
+if level_name == "l03u_agr_underground"  then
+nd_news_main_data.on_disconnect()
+end
+
+if level_name == "lvl4_darkvalley" then 
+nd_news_main_data.on_connect()
+end
+
+if level_name == "lvl4u_darklab" then 
+nd_news_main_data.on_disconnect()
+end
+
+if level_name == "lvl5_bar" then 
+nd_news_main_data.on_connect()
+end
+if level_name == "l06_rostok" then 
+nd_news_main_data.on_connect()
+end
+if level_name == "l07_military" then 
+nd_news_main_data.on_connect()
+end
+if level_name == "l08_yantar" then 
+nd_news_main_data.on_connect()
+end
+
+if level_name == "l08u_brainlab" then
+nd_news_main_data.on_disconnect()
+end
+
+if level_name == "l10_radar" then 
+nd_news_main_data.on_disconnect()
+end
+
+if level_name == "l12_stancia" then 
+nd_news_main_data.on_connect()
+end
+if level_name == "l12_stancia_2" then 
+nd_news_main_data.on_connect()
+end
+if level_name == "l11_pripyat" then 
+nd_news_main_data.on_connect()
+end
+
+if level_name == "l12u_control_monolith" then 
+nd_news_main_data.on_disconnect()
+end
+
+if level_name == "l12u_sarcofag" then 
+nd_news_main_data.on_disconnect()
+end
+
+if leve_name  == "l10u_bunker" then
+nd_news_main_data.on_disconnect()
+end
+end
+--]]
+
+-------------------- Advanced Reconstruction Stalker Mod v0.5 --------------------
+--[[
+
+If you're going to use the whole of this script or its parts in your own creative 
+developments for the S.T.A.L.K.E.R. game, please don't become such a goddamn 
+motherfucker like the notorious author of the ABC Mod - Carbrobro. Leave the 
+copyrights, note the real author(s) and don't claim others' ideas and their 
+realization to be your own ones. It's just simple Modmakers' Ethics. Thank you!
+
+Если вы собираетесь использовать данный скрипт целиком или частично в своих 
+разработках по игре S.T.A.L.K.E.R., пожалуйста не опускайтесь до уровня печально 
+известного автора ABC мода - Carbrobro. Не удаляйте копирайты, указывайте настоящего 
+автора(ов) и не выдавайте чужие идеи и их реализацию за свои. Ведь это элементарная 
+этика модостроителей! Спасибо за понимание.
+
+]]--
